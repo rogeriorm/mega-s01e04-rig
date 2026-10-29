@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { readNight } from './digest/read.js';
 import { loadConfig, type RigConfig } from './config.js';
+import { readNight } from './digest/read.js';
 import { lane } from './lane.js';
 import { readStatus } from './status.js';
 import { DigestPage } from './views/digest.js';
@@ -19,6 +19,13 @@ export function createApp(config: RigConfig = loadConfig()) {
       </Layout>,
     ),
   );
+
+  // Same Night the page renders (ADR 0001): rows are sorted by job in the reader, not here.
+  app.get('/api/digest/:night', (c) => {
+    const night = readNight(config.runsDir, c.req.param('night'));
+    if (!night) return c.json({ error: 'no run log for that night' }, 404);
+    return c.json(night);
+  });
 
   app.get('/digest/:night', (c) => {
     const night = readNight(config.runsDir, c.req.param('night'));
